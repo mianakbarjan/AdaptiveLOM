@@ -109,7 +109,10 @@ class CVProcessor:
 
 class LoMGenerator:
     def __init__(self, api_key: str):
-        self.client = openai.OpenAI(api_key=api_key)
+        self.client = openai.OpenAI(
+            api_key=api_key,
+            base_url="https://api.openai.com/v1"
+        )
         self.cv_processor = CVProcessor()
         
     def extract_text_from_pdf(self, pdf_file) -> str:
@@ -188,10 +191,14 @@ def main():
             st.info("You can get your API key from: https://platform.openai.com/api-keys")
             return
     
-    # Initialize session state with API key
-    if 'lom_generator' not in st.session_state:
-        st.session_state.lom_generator = LoMGenerator(api_key)
-    
+    try:
+        # Initialize session state with API key
+        if 'lom_generator' not in st.session_state:
+            st.session_state.lom_generator = LoMGenerator(api_key)
+    except Exception as e:
+        st.error(f"Error initializing OpenAI client: {str(e)}")
+        return
+        
     # Create columns for input fields
     col1, col2 = st.columns(2)
     
