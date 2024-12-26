@@ -34,7 +34,7 @@ load_dotenv()
 
 # Configure the page
 st.set_page_config(
-    page_title="LoM Generator",
+    page_title="AdaptiveLOM",
     page_icon="📝",
     layout="wide"
 )
@@ -108,18 +108,10 @@ class CVProcessor:
         }
 
 class LoMGenerator:
-    def __init__(self):
-        # Get API key from Streamlit secrets
-        api_key = st.secrets.get("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OpenAI API key not found in secrets")
-        
-        # Initialize OpenAI client with only the required configuration
-        self.client = openai.OpenAI(
-            api_key=api_key,
-        )
+    def __init__(self, api_key: str):
+        self.client = openai.OpenAI(api_key=api_key)
         self.cv_processor = CVProcessor()
-                
+        
     def extract_text_from_pdf(self, pdf_file) -> str:
         """Extract text from uploaded PDF file"""
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_file))
@@ -148,7 +140,7 @@ class LoMGenerator:
         """
         
         response = self.client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are an expert in writing Letters of Motivation."},
                 {"role": "user", "content": f"{prompt}\n\nContext:\n{context}"}
@@ -162,7 +154,7 @@ class LoMGenerator:
     def evaluate_and_improve(self, complete_lom: str) -> tuple[str, str]:
         """Evaluate the complete LoM and generate an improved version"""
         evaluation_response = self.client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are an expert in evaluating Letters of Motivation."},
                 {"role": "user", "content": f"Evaluate this Letter of Motivation and list any issues or areas for improvement:\n\n{complete_lom}"}
@@ -173,7 +165,7 @@ class LoMGenerator:
         issues = evaluation_response.choices[0].message.content
         
         improvement_response = self.client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are an expert in improving Letters of Motivation."},
                 {"role": "user", "content": f"Improve this Letter of Motivation based on these issues:\n\nOriginal Letter:\n{complete_lom}\n\nIssues to Address:\n{issues}"}
@@ -184,19 +176,21 @@ class LoMGenerator:
         return issues, improvement_response.choices[0].message.content
 
 def main():
-    st.title("📝 Letter of Motivation Generator")
+    st.title("📝 AdaptiveLOM")
     st.markdown("### Transform your CV into a compelling Letter of Motivation")
     
-    try:
-        # Initialize session state with LoM Generator
-        if 'lom_generator' not in st.session_state:
-            st.session_state.lom_generator = LoMGenerator()
-    except ValueError as e:
-        st.error("Error: OpenAI API key not configured. Please add it to your Streamlit secrets.")
-        st.stop()
-    except Exception as e:
-        st.error(f"An error occurred during initialization: {str(e)}")
-        st.stop()
+    # API Key handling
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        api_key = st.text_input("Enter your OpenAI API Key:", type="password")
+        if not api_key:
+            st.warning("Please enter your OpenAI API key to proceed.")
+            st.info("You can get your API key from: https://platform.openai.com/api-keys")
+            return
+    
+    # Initialize session state with API key
+    if 'lom_generator' not in st.session_state:
+        st.session_state.lom_generator = LoMGenerator(api_key)
     
     # Create columns for input fields
     col1, col2 = st.columns(2)
