@@ -108,8 +108,8 @@ class CVProcessor:
         }
 
 class LoMGenerator:
-    def __init__(self, api_key: str):
-        self.client = openai.OpenAI(api_key=api_key)
+    def __init__(self):
+        self.client = openai.OpenAI()
         self.cv_processor = CVProcessor()
         
     def extract_text_from_pdf(self, pdf_file) -> str:
@@ -179,18 +179,10 @@ def main():
     st.title("📝 Letter of Motivation Generator")
     st.markdown("### Transform your CV into a compelling Letter of Motivation")
     
-    # API Key handling
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        api_key = st.text_input("Enter your OpenAI API Key:", type="password")
-        if not api_key:
-            st.warning("Please enter your OpenAI API key to proceed.")
-            st.info("You can get your API key from: https://platform.openai.com/api-keys")
-            return
     
     # Initialize session state with API key
     if 'lom_generator' not in st.session_state:
-        st.session_state.lom_generator = LoMGenerator(api_key)
+        st.session_state.lom_generator = LoMGenerator()
     
     # Create columns for input fields
     col1, col2 = st.columns(2)
