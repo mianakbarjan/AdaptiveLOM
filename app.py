@@ -109,13 +109,17 @@ class CVProcessor:
 
 class LoMGenerator:
     def __init__(self):
+        # Get API key from Streamlit secrets
         api_key = st.secrets.get("OPENAI_API_KEY")
         if not api_key:
             raise ValueError("OpenAI API key not found in secrets")
-
-        self.client = openai.OpenAI(api_key=api_key)
-        self.cv_processor = CVProcessor()
         
+        # Initialize OpenAI client with only the required configuration
+        self.client = openai.OpenAI(
+            api_key=api_key,
+        )
+        self.cv_processor = CVProcessor()
+                
     def extract_text_from_pdf(self, pdf_file) -> str:
         """Extract text from uploaded PDF file"""
         pdf_reader = PyPDF2.PdfReader(io.BytesIO(pdf_file))
