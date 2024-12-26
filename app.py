@@ -109,7 +109,11 @@ class CVProcessor:
 
 class LoMGenerator:
     def __init__(self):
-        self.client = openai.OpenAI()
+        api_key = st.secrets.get("OPENAI_API_KEY")
+        if not api_key:
+            raise ValueError("OpenAI API key not found in secrets")
+
+        self.client = openai.OpenAI(api_key=api_key)
         self.cv_processor = CVProcessor()
         
     def extract_text_from_pdf(self, pdf_file) -> str:
@@ -179,10 +183,16 @@ def main():
     st.title("📝 Letter of Motivation Generator")
     st.markdown("### Transform your CV into a compelling Letter of Motivation")
     
-    
-    # Initialize session state with API key
-    if 'lom_generator' not in st.session_state:
-        st.session_state.lom_generator = LoMGenerator()
+    try:
+        # Initialize session state with LoM Generator
+        if 'lom_generator' not in st.session_state:
+            st.session_state.lom_generator = LoMGenerator()
+    except ValueError as e:
+        st.error("Error: OpenAI API key not configured. Please add it to your Streamlit secrets.")
+        st.stop()
+    except Exception as e:
+        st.error(f"An error occurred during initialization: {str(e)}")
+        st.stop()
     
     # Create columns for input fields
     col1, col2 = st.columns(2)
